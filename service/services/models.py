@@ -10,6 +10,19 @@ class Service(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__full_price = self.full_price
+
+
+    def save(self, *args, **kwargs):
+
+        if self.full_price != self.__full_price:
+            for subscription in self.subscriptions.all():
+                set_price.delay(subscription.id)
+
+        return super().save(*args, **kwargs)
+
 class Plan(models.Model):
     PLAN_TYPES = (
         ('full', 'full'),
@@ -31,7 +44,7 @@ class Plan(models.Model):
     def save(self, *args, **kwargs):
 
         if self.discount_percent != self.__discount_percent:
-            for subscription in self.subscription.all():
+            for subscription in self.subscriptions.all():
                 set_price.delay(subscription.id)
 
         return super().save(*args, **kwargs)
